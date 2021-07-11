@@ -1,8 +1,9 @@
 import socketIOClient from "socket.io-client";
 import { getLocalStream, getStore, handleIceCandidate, handleWebRtcAnswer, prepareWebRtcAnswer, resetCallStateAfterHangUp, sendWebRTCOffer } from "../utils";
+import { prepareACallToOthers } from "../utils";
 
 let socket;
-export const socketIOConnection = (dispatch) => {
+export const socketIOConnection = (dispatch, getState) => {
     socket = socketIOClient(process.env.REACT_APP_SERVER_URI);
 
     socket.on("connection", () => {
@@ -37,6 +38,14 @@ export const socketIOConnection = (dispatch) => {
                 resetCallStateAfterHangUp(dispatch, stream);
             })
         })
+
+        socket.on("join_room_request", (data) => {
+            prepareACallToOthers(data, dispatch);
+        })
+
+        socket.on("leave_group", (streamId) => {
+            dispatch("REMOVE_STREAM_ID_FROM_GROUPS", streamId)
+        })
     })
 }
 
@@ -44,6 +53,9 @@ const handleServerBroadcastEvent = (dispatch, data) => {
     switch (data.event) {
         case "users":
             dispatch("SET_USERS", data.users);
+            break;
+        case "groups":
+            dispatch("SET_GROUPS", data.groups);
             break;
         default:
             break;
@@ -122,4 +134,16 @@ export const hangUpCallFromSocket = (dispatch, stream) => {
     });
 
     resetCallStateAfterHangUp(dispatch, stream);
+}
+
+export const registerANewRoomWithSocket = (data) => {
+    socket.emit("register_new_room", data);
+}
+
+export const joinARoomWithSocket = (data) => {
+    socket.emit("join_room_request", data);
+}
+
+export const leaveGroupWithSocket = (data) => {
+    socket.emit("leave_group", data);
 }

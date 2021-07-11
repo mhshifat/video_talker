@@ -7,10 +7,10 @@ import Dashboard from "./pages/Dashboard";
 import StoreProvider, { useStore } from "./provider/StoreProvider";
 
 export default function App() {
-  const { dispatch } = useStore();
+  const { dispatch, getState } = useStore();
 
   useEffect(() => {
-    socketIOConnection(dispatch);
+    socketIOConnection(dispatch, getState);
   }, []);
 
   return (

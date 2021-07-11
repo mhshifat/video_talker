@@ -282,3 +282,26 @@
 .dashboard__content {
     min-height: 18rem;
 }
+
+.dashboard__groupItem:hover {
+    cursor: pointer;
+    opacity: .5;
+}
+
+.group_video {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+ }
+
+.group_video + .group_video {
+    margin-left: 1rem;
+}
+
+.videos_wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center !important;
+    padding: 1rem;
+    align-items: baseline !important;
+    height: 100%;
+}

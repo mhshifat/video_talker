@@ -1,5 +1,7 @@
 const express = require("express");
 const socketIo = require("socket.io");
+const { ExpressPeerServer } = require("peer");
+const { v4: uuidV4 } = require("uuid");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -10,6 +12,16 @@ const server = app.listen(PORT, () => {
     console.log(`The server is running on http://localhost:${5000}`);
 })
 
+const peerServer = ExpressPeerServer(server, {
+    debug: true
+})
+
+app.use("/peer", peerServer);
+
+peerServer.on("connection", (client) => {
+    console.log(client.id);
+})
+
 const io = socketIo(server, {
     cors: {
         origin: "*"
@@ -17,6 +29,7 @@ const io = socketIo(server, {
 })
 
 let peers = [];
+let groups = [];
 io.on("connection", (socket) => {
     socket.emit("connection", null);
 
@@ -26,6 +39,11 @@ io.on("connection", (socket) => {
         io.sockets.emit("broadcast", {
             event: "users",
             users: peers
+        })
+
+        io.sockets.emit("broadcast", {
+            event: "groups",
+            groups
         })
     })
 
@@ -58,6 +76,34 @@ io.on("connection", (socket) => {
     socket.on("hang_up", (data) => {
         const { connectedUser } = data;
         io.to(connectedUser).emit("hang_up");
+    })
+
+    socket.on("register_new_room", (data) => {
+        const roomId = uuidV4();
+        socket.join(roomId);
+        const newGroupCallData = {
+            roomId,
+            peerId: data.peerId,
+            socketId: socket.id,
+            host: data.username
+        }
+        groups.push(newGroupCallData);
+        io.sockets.emit("broadcast", {
+            event: "groups",
+            groups
+        })
+    })
+
+    socket.on("join_room_request", data => {
+        io.to(data.roomId).emit("join_room_request", data);
+
+        socket.join(data.roomId);
+    })
+
+    socket.on("leave_group", data => {
+        io.to(data.roomId).emit("leave_group", data.streamId);
+
+        socket.leave(data.roomId);
     })
 
     socket.on("disconnect", () => {

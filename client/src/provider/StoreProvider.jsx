@@ -12,6 +12,7 @@ export default function StoreProvider({ children }) {
     return (
         <StoreContext.Provider value={{
             store: state,
+            getState: () => state,
             dispatch: (type, payload) => new Promise((resolve) => resolve(dispatch({ type, payload }) ))
         }}>
             {children}
@@ -22,7 +23,8 @@ export default function StoreProvider({ children }) {
 const initialState = {
     dashboard: {
         username: "",
-        users: []
+        users: [],
+        groups: []
     },
     call: {
         local_stream: null,
@@ -33,7 +35,9 @@ const initialState = {
         callerUsername: "",
         local_mic_enabled: true,
         local_video_enabled: true,
-        screenSharingActive: false
+        screenSharingActive: false,
+        groupCallActive: false,
+        groupCallStreams: [],
     }
 }
 
@@ -140,6 +144,48 @@ function reducer(state = initialState, actions) {
                     local_mic_enabled: true,
                     local_video_enabled: true,
                     screenSharingActive: false
+                }
+            }
+        case "SET_GROUPS":
+            return {
+                ...state,
+                dashboard: {
+                    ...state.dashboard,
+                    groups: actions.payload
+                }
+            }
+        case "SET_GROUP_CALL_ACTIVE":
+            return {
+                ...state,
+                call: {
+                    ...state.call,
+                    groupCallActive: actions.payload
+                }
+            }
+        case "SET_GROUP_CALL_STREAMS":
+            return {
+                ...state,
+                call: {
+                    ...state.call,
+                    groupCallStreams: [...state.call.groupCallStreams, actions.payload]
+                }
+            }
+        case "RESET_GROUP_CALL_STREAMS":
+            return {
+                ...state,
+                call: {
+                    ...state.call,
+                    groupCallStreams: [],
+                    groupCallActive: false,
+                    callState: "AVAILABLE"
+                }
+            }
+        case "REMOVE_STREAM_ID_FROM_GROUPS":
+            return {
+                ...state,
+                call: {
+                    ...state.call,
+                    groupCallStreams: state.call.groupCallStreams.filter(i => i.id !== actions.payload),
                 }
             }
         default:

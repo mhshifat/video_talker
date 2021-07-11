@@ -6,6 +6,8 @@ import CallingDialog from "../components/CallingDialog";
 import IncomingCallDialog from "../components/IncomingCallDialog";
 import CallRejectedDialog from '../components/CallRejectedDialog';
 import { MdCallEnd, MdCamera, MdCameraAlt, MdMic, MdMicOff, MdVideocam, MdVideocamOff, MdVideoLabel } from "react-icons/md";
+import { connectWithMyPeer, joinARoomWithPeer, leaveGroupWithPeer, registerNewRoomWithPeer } from "../lib/peer";
+import GroupCallVideo from "../components/GroupCallVideo";
 
 export default function Dashboard() {
     const { store, dispatch } = useStore();
@@ -14,8 +16,11 @@ export default function Dashboard() {
 
     useEffect(() => {
         getLocalStream(dispatch)
-            .then((stream) => dispatch("SET_LOCAL_STREAM", stream))
-            .then(() => dispatch("SET_CALL_STATE", "AVAILABLE"))
+            .then(async (stream) => {
+                await dispatch("SET_LOCAL_STREAM", stream);
+                await dispatch("SET_CALL_STATE", "AVAILABLE")
+                await connectWithMyPeer(stream, dispatch);
+            })
     }, [])
 
     useEffect(() => {
@@ -76,6 +81,23 @@ export default function Dashboard() {
         hangUpCallFromSocket(dispatch, store.call.local_stream);   
     }
 
+    const createANewRoom = async () => {
+        await dispatch("SET_GROUP_CALL_ACTIVE", true);
+        await dispatch("SET_CALL_STATE", "IN_PROGRESS");
+        registerNewRoomWithPeer();   
+    }
+
+    const joinARoom = async (data) => {
+        await dispatch("SET_GROUP_CALL_ACTIVE", true);
+        await dispatch("SET_CALL_STATE", "IN_PROGRESS");
+        joinARoomWithPeer(data); 
+    }
+
+    const leaveGroup = async (stream) => {
+        leaveGroupWithPeer(dispatch, stream);
+    }
+    
+
     return (
         <Fragment>
             <div className="dashboad">
@@ -92,7 +114,12 @@ export default function Dashboard() {
                     </div>
                     <div className="dashboard__content">
                         {store.call.remote_stream && <video className="remote__video" ref={remoteVideoRef} src="" />}
-                        {store.call.remote_stream && <div>
+                        <div className="videos_wrapper">
+                            {!!store.call.groupCallStreams.length && store.call.groupCallStreams.map((stream, ind) => (
+                                <GroupCallVideo key={ind} stream={stream} />
+                            ))}
+                        </div>
+                        {(store.call.remote_stream || store.call.groupCallActive) && <div>
                             <div>
                                 <button className="btn" onClick={switchLocalMic}>
                                     {store.call.local_mic_enabled && <MdMic />}
@@ -109,15 +136,16 @@ export default function Dashboard() {
                                     {!store.call.screenSharingActive && <MdVideoLabel />}
                                     {store.call.screenSharingActive && <MdCamera />}
                                 </button>
-                                <button className="btn" onClick={hangUpCallButtonClick}>
+                                {!store.call.groupCallActive && <button className="btn" onClick={hangUpCallButtonClick}>
                                     <MdCallEnd />
-                                </button>
+                                </button>}
                             </div>
                         </div>}
                     </div>
                     <div>
-                        <button type="button">Create Room</button>
-                        <button type="button">Chat</button>
+                        {store.call.callState !== "IN_PROGRESS" && !store.call.groupCallActive && <button onClick={createANewRoom} type="button">Create Room</button>}
+                        {/* {store.call.callState === "IN_PROGRESS" && <button type="button">Chat</button>} */}
+                        {store.call.groupCallActive && <button onClick={() => leaveGroup(store.call.local_stream)} type="button">Leave Group</button>}
                     </div>
                 </div>
                 <div className="dashboard__people">
@@ -129,9 +157,15 @@ export default function Dashboard() {
                     ))}
                 </div>
                 <div className="dashboard__groups">
-                    <div className="dashboard__groupItem">
-                        { store.dashboard.username }
-                    </div>
+                    {store.dashboard.groups.map(g => (
+                        <div onClick={() => joinARoom({
+                            roomId: g.roomId,
+                            hostSocketId: g.socketId,
+                            streamId: store.call.local_stream.id
+                        })} key={g.roomId} className="dashboard__groupItem">
+                            { g.host }
+                        </div>
+                    ))}
                 </div>
             </div>
 

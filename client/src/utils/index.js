@@ -1,13 +1,18 @@
+import { sendGroupCall } from "../lib/peer";
 import { sendIceCandidates } from "../lib/socket";
 
+let local_stream;
 export const getLocalStream = async (dispatch) => {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        local_stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
-            video: true,
+            video: {
+                width: 480,
+                height: 360
+            },
         });
-        createRTCConnection(dispatch, stream);
-        return stream;
+        createRTCConnection(dispatch, local_stream);
+        return local_stream;
     } catch (err) {
         console.log(err);
     }
@@ -120,4 +125,8 @@ export const startIncomingCallAudio = () => {
 export const stopIncomingCallAudio = () => {
     incomingCallTune.pause();
     incomingCallTune.currentTime = 0;
+}
+
+export const prepareACallToOthers = (data, dispatch) => {
+    sendGroupCall(data, local_stream, dispatch);
 }
