@@ -7,8 +7,8 @@ let incomingStreams = [];
 export const connectWithMyPeer = (stream, dispatch) => {
     myPeer = new window.Peer(undefined, {
         path: "/peer",
-        host: "/",
-        port: "5000"
+        host: process.env.REACT_APP_SERVER_URI_WITHOUT,
+        port: process.env.REACT_APP_NODE_ENV === "dev" ? "5000" : "443"
     });
 
     myPeer.on("open", (id) => {

@@ -1,6 +1,5 @@
 import socketIOClient from "socket.io-client";
-import { getLocalStream, getStore, handleIceCandidate, handleWebRtcAnswer, prepareWebRtcAnswer, resetCallStateAfterHangUp, sendWebRTCOffer } from "../utils";
-import { prepareACallToOthers } from "../utils";
+import { getLocalStream, getStore, handleIceCandidate, handleWebRtcAnswer, prepareACallToOthers, prepareWebRtcAnswer, resetCallStateAfterHangUp, sendWebRTCOffer } from "../utils";
 
 let socket;
 export const socketIOConnection = (dispatch, getState) => {
