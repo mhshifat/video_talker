@@ -1,13 +1,13 @@
 import { Fragment, useEffect, useRef } from "react";
-import { useStore } from "../provider/StoreProvider"
-import { getLocalStream, startIncomingCallAudio, stopIncomingCallAudio, switchScreenHandler } from "../utils";
-import { hangUpCallFromSocket, sendCallPreOfferToOtherUser } from "../lib/socket";
+import { MdCallEnd, MdCamera, MdMic, MdMicOff, MdVideocam, MdVideocamOff, MdVideoLabel } from "react-icons/md";
 import CallingDialog from "../components/CallingDialog";
-import IncomingCallDialog from "../components/IncomingCallDialog";
 import CallRejectedDialog from '../components/CallRejectedDialog';
-import { MdCallEnd, MdCamera, MdCameraAlt, MdMic, MdMicOff, MdVideocam, MdVideocamOff, MdVideoLabel } from "react-icons/md";
-import { connectWithMyPeer, joinARoomWithPeer, leaveGroupWithPeer, registerNewRoomWithPeer } from "../lib/peer";
 import GroupCallVideo from "../components/GroupCallVideo";
+import IncomingCallDialog from "../components/IncomingCallDialog";
+import { connectWithMyPeer, joinARoomWithPeer, leaveGroupWithPeer, registerNewRoomWithPeer } from "../lib/peer";
+import { hangUpCallFromSocket, sendCallPreOfferToOtherUser } from "../lib/socket";
+import { useStore } from "../provider/StoreProvider";
+import { getLocalStream, startIncomingCallAudio, stopIncomingCallAudio, switchScreenHandler } from "../utils";
 
 export default function Dashboard() {
     const { store, dispatch } = useStore();
@@ -94,10 +94,9 @@ export default function Dashboard() {
     }
 
     const leaveGroup = async (stream) => {
-        leaveGroupWithPeer(dispatch, stream);
+        leaveGroupWithPeer(dispatch, stream, store.dashboard.username);
     }
     
-
     return (
         <Fragment>
             <div className="dashboad">
@@ -161,7 +160,7 @@ export default function Dashboard() {
                         <div onClick={() => joinARoom({
                             roomId: g.roomId,
                             hostSocketId: g.socketId,
-                            streamId: store.call.local_stream.id
+                            streamId: store.call.local_stream?.id
                         })} key={g.roomId} className="dashboard__groupItem">
                             { g.host }
                         </div>

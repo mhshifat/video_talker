@@ -8,7 +8,8 @@ export const connectWithMyPeer = (stream, dispatch) => {
     myPeer = new window.Peer(undefined, {
         path: "/peer",
         host: process.env.REACT_APP_SERVER_URI_WITHOUT,
-        port: process.env.REACT_APP_NODE_ENV === "dev" ? "5000" : "443"
+        port: process.env.REACT_APP_NODE_ENV === "dev" ? "5000" : "443",
+        secure: process.env.REACT_APP_NODE_ENV !== "dev"
     });
 
     myPeer.on("open", (id) => {
@@ -45,7 +46,7 @@ export const joinARoomWithPeer = (data) => {
 
 export const sendGroupCall = (data, stream, dispatch) => {
     const call = myPeer.call(data.peerId, stream);
-    call.on("stream", (incomingStream) => {
+    call?.on("stream", (incomingStream) => {
         const stream = incomingStreams.find(i => i.id === incomingStream.id);
         if (!stream) {
             incomingStreams.push(incomingStream);
@@ -54,8 +55,8 @@ export const sendGroupCall = (data, stream, dispatch) => {
     })
 }
 
-export const leaveGroupWithPeer = (dispatch, stream) => {
-    leaveGroupWithSocket({ roomId: joinedRoomId, streamId: stream.id });
+export const leaveGroupWithPeer = (dispatch, stream, leavingUser) => {
+    leaveGroupWithSocket({ roomId: joinedRoomId, streamId: stream?.id, leavingUser });
 
     resetVideoCallGroups(stream, dispatch);
 }

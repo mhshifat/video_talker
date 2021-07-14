@@ -144,5 +144,5 @@ export const joinARoomWithSocket = (data) => {
 }
 
 export const leaveGroupWithSocket = (data) => {
-    socket.emit("leave_group", data);
+  socket.emit("leave_group", data);
 }

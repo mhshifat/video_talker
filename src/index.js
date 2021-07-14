@@ -18,10 +18,6 @@ const peerServer = ExpressPeerServer(server, {
 })
 
 app.use("/peer", peerServer);
-app.use(express.static(path.resolve(__dirname, "./client/build")));
-app.get("*", function (request, response) {
-  response.sendFile(path.resolve(__dirname, "./client/build", "index.html"));
-});
 
 peerServer.on("connection", (client) => {
   console.log(client.id);
@@ -106,17 +102,31 @@ io.on("connection", (socket) => {
   })
 
   socket.on("leave_group", data => {
+    const { leavingUser, roomId } = data;
     io.to(data.roomId).emit("leave_group", data.streamId);
-
     socket.leave(data.roomId);
+    console.log({ leavingUser });
+    if (!roomId || groups.find(g => g.host === leavingUser)) {
+      groups = groups.filter(g => g.host !== leavingUser);
+
+      io.sockets.emit("broadcast", {
+        event: "groups",
+        groups
+      })
+    }
   })
 
   socket.on("disconnect", () => {
     peers = peers.filter(i => i.id !== socket.id);
+    groups = groups.filter(g => g.socketId !== socket.id);
 
     io.sockets.emit("broadcast", {
       event: "users",
       users: peers
+    })
+    io.sockets.emit("broadcast", {
+      event: "groups",
+      groups
     })
   })
 })

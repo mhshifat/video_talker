@@ -1,3 +1,4 @@
+import Swal from "sweetalert2";
 import { sendGroupCall } from "../lib/peer";
 import { sendIceCandidates } from "../lib/socket";
 
@@ -15,6 +16,10 @@ export const getLocalStream = async (dispatch) => {
         return local_stream;
     } catch (err) {
         console.log(err);
+        Swal.fire({
+          icon: "error",
+          title: err.message
+        })
     }
 }
 
