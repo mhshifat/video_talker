@@ -1,5 +1,5 @@
 import socketIOClient from "socket.io-client";
-import { getLocalStream, getStore, handleIceCandidate, handleWebRtcAnswer, prepareACallToOthers, prepareWebRtcAnswer, resetCallStateAfterHangUp, sendWebRTCOffer } from "../utils";
+import { getLocalStream, getStore, handleIceCandidate, handleWebRtcAnswer, prepareACallToOthers, prepareWebRtcAnswer, resetCallStateAfterHangUp, sendWebRTCOffer, stopIncomingCallAudio } from "../utils";
 
 let socket;
 export const socketIOConnection = (dispatch, getState) => {
@@ -55,6 +55,10 @@ const handleServerBroadcastEvent = (dispatch, data) => {
             break;
         case "groups":
             dispatch("SET_GROUPS", data.groups);
+            if (!data?.groups?.length) {
+              dispatch("SET_GROUP_CALL_ACTIVE", false);
+              dispatch("SET_CALL_STATE", "AVAILABLE");
+            }
             break;
         default:
             break;
@@ -98,10 +102,13 @@ const handleCallRequestedPreOffer = async (dispatch, caller) => {
 }
 
 export const sendPreOfferRequestedAnswer = (caller, answer) => {
-    socket.emit("pre_offer_answer", {
-        caller,
-        answer
-    })
+  if (answer === "ACCEPTED") {
+    stopIncomingCallAudio();
+  }
+  socket.emit("pre_offer_answer", {
+      caller,
+      answer
+  })
 }
 
 export const registerANewUser = async (username) => {

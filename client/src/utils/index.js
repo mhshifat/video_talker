@@ -107,7 +107,7 @@ export const switchScreenHandler = async (store, dispatch) => {
 
 export const resetCallStateAfterHangUp = async (dispatch, stream) => {
     const store = getStore();
-    peerConnection.close();
+    peerConnection?.close();
     peerConnection = null;
     createRTCConnection(dispatch, stream);
     await dispatch("RESET_STATE_AFTER_HANG_UP");
